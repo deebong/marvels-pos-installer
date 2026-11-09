@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Marvels POS Installation</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #06b6d4; /* Aqua */
+            --primary-light: #ecfeff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --sidebar-bg: #f8fafc;
+            --success: #06b6d4; /* Aqua Checkmarks */
+            --error: #ef4444;
+            --focus-ring: rgba(6, 182, 212, 0.2);
+        }
+
+        /* GLOBALLY HIDE SCROLLBARS BUT KEEP SCROLLING */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        *::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+
+        body {
+            background-color: #0891b2; /* Applied the requested background color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--text-main);
+        }
+
+        /* --- WELCOME SCREEN OVERLAY (Light Theme) --- */
+        #welcome-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ffffff;
+            color: var(--text-main);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #welcome-overlay.hidden-overlay {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .welcome-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            text-align: center;
+            white-space: nowrap; /* Keep on one line on desktop */
+        }
+
+        .welcome-content p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin: 0 auto 3rem auto;
+            max-width: 550px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px 36px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px; /* Changed from 50px to 8px */
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(6, 182, 212, 0.4);
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .installer-container {
+            display: flex;
+            background: var(--bg-panel);
+            width: 100%;
+            max-width: 1100px;
+            height: 700px; /* Applied exactly like Theme 2 */
+            max-height: calc(100vh - 4rem); /* Smart limit so it never forces outer scrolling */
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- SIDEBAR (Desktop) --- */
+        .sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            padding: 50px 40px; 
+            border-right: 1px solid var(--border-light);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 60px;
+        }
+
+        .brand i {
+            color: var(--primary);
+            font-size: 32px;
+        }
+
+        .steps-list {
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            background: #fff;
+            transition: all 0.3s;
+            z-index: 2;
+        }
+
+        .step-item.active {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .step-item.active .step-circle {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .step-item.completed {
+            color: var(--text-main);
+        }
+
+        .step-item.completed .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto; 
+            height: 48px; /* Perfectly matches footer button height for horizontal alignment */
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            padding: 50px 70px 0 70px; /* Modified for sticky footer */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* --- MOBILE HEADER & PROGRESS --- */
+        .mobile-header-wrapper {
+            display: none;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-text h2 {
+            font-size: 28px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header-text p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .help-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .help-link-mobile { display: none; }
+
+        .help-link strong {
+            color: var(--primary);
+        }
+
+        .step-section {
+            display: none;
+            flex: 1;
+            animation: fadeIn 0.4s ease forwards;
+            position: relative;
+            z-index: 10;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-section.active {
+            display: flex;
+            flex-direction: column;
+            z-index: 99; /* CRITICAL FIX: Active step sits ABOVE the footer layer */
+        }
+
+        /* --- CARDS --- */
+        .cards-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 500px;
+        }
+
+        .selection-card {
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .selection-card:hover {
+            border-color: #94a3b8;
+        }
+
+        .selection-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .selection-card i {
+            font-size: 48px; /* Set to 48px */
+            color: var(--primary);
+            margin-top: 2px;
+        }
+
+        .card-text h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .card-text p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* --- FORMS --- */
+        .form-group {
+            margin-bottom: 24px;
+            max-width: 600px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            max-width: 600px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        /* --- CUSTOM DROPDOWN --- */
+        .custom-select-wrapper {
+            position: relative;
+            user-select: none;
+            width: 100%;
+        }
+        
+        .custom-select-wrapper.open {
+            z-index: 999; /* CRITICAL FIX: Ensures dropdown opens ABOVE footer-nav */
+        }
+
+        .custom-select-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 14px 16px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .custom-select-trigger i {
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        
+        .custom-select-wrapper.open .custom-select-trigger i {
+            transform: rotate(180deg);
+        }
+
+        .custom-options {
+            position: absolute;
+            display: block;
+            top: calc(100% + 8px); /* 8px gap */
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .custom-select-wrapper.open .custom-options {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* FIX: Make bottom dropdowns (Language & Currency) open upwards to prevent overlapping sticky footer */
+        #lang-select .custom-options,
+        #currency-select .custom-options {
+            top: auto;
+            bottom: calc(100% + 8px);
+            transform: translateY(10px);
+        }
+
+        #lang-select.open .custom-options,
+        #currency-select.open .custom-options {
+            transform: translateY(0);
+        }
+
+        .custom-option {
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .custom-option:hover {
+            background: var(--bg-body);
+        }
+
+        .custom-option.selected {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .custom-option .check-icon {
+            display: none;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .custom-option.selected .check-icon {
+            display: block;
+        }
+
+        /* --- ACCORDION & HINT --- */
+        details.gs-instructions {
+            background: #fff; /* White background */
+            border: 1px solid var(--primary); /* Aqua Border */
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            max-width: 600px;
+            transition: all 0.3s;
+        }
+        
+        details.gs-instructions summary {
+            font-weight: 600;
+            color: var(--text-main); /* Black title */
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        details.gs-instructions summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        details.gs-instructions summary::before {
+            content: "\25B6";
+            font-size: 10px;
+            margin-right: 10px;
+            transition: transform 0.2s;
+        }
+        
+        details.gs-instructions[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .gs-content {
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .gs-content ol {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .gs-content li {
+            margin-bottom: 12px;
+        }
+
+        .btn-small {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        
+        .btn-small:hover {
+            background: var(--bg-body);
+        }
+
+        .gs-note {
+            font-size: 13px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-light);
+            padding-top: 12px;
+        }
+
+        .setup-hint {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            border-radius: 8px;
+            margin-top: 12px; /* 12px margin from input */
+            margin-bottom: 24px;
+            max-width: 600px;
+        }
+
+        .setup-hint i {
+            color: var(--primary); /* Aqua Lightbulb */
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .setup-hint p {
+            font-size: 13.5px;
+            color: var(--text-main); /* Black text */
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* --- FOOTER BUTTONS --- */
+        .footer-nav {
+            margin-top: auto;
+            padding-top: 30px;
+            padding-bottom: 50px; /* Bottom padding moved here */
+            display: flex;
+            justify-content: space-between;
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-panel);
+            z-index: 100; /* Ensuring it sits above content but below dropdowns */
+        }
+        
+        .footer-nav-inner {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .btn-outline {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-body);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #0891b2; /* Darker Aqua on hover */
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+        
+        .btn-sm-check {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .success-text {
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: fadeIn 0.3s ease;
+        }
+        .error-text {
+            color: var(--error);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* --- CONFETTI CANVAS --- */
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1; 
+        }
+
+        /* --- RESPONSIVE MOBILE UI (Gomer Inspiration) --- */
+        .mobile-bottom-sheet-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .mobile-bottom-sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-bottom-sheet {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            padding: 32px 24px 40px 24px;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+
+        .mobile-bottom-sheet.active {
+            transform: translateY(0);
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .sheet-header h3 {
+            font-size: 20px;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+        .sheet-header p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .sheet-close-btn {
+            background: var(--bg-body);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                background: #fff;
+            }
+
+            .installer-container {
+                flex-direction: column;
+                height: auto; /* Reset fixed height */
+                max-height: none; /* Reset max-height */
+                min-height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .sidebar {
+                display: none; /* Hide sidebar on mobile */
+            }
+
+            .welcome-content h1 {
+                white-space: normal;
+                font-size: 2.25rem;
+            }
+            .welcome-content p {
+                font-size: 1.1rem;
+                padding: 0 10px;
+            }
+
+            .main-content {
+                padding: 24px;
+                padding-top: 0;
+                padding-bottom: 0; /* Add this */
+            }
+
+            /* Mobile Header & Progress Bar */
+            .mobile-header-wrapper {
+                display: block;
+                background: #fff;
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                padding-top: 24px;
+                margin-bottom: 24px;
+            }
+
+            .mobile-nav {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+
+            .mobile-back-btn {
+                background: none;
+                border: none;
+                font-size: 15px;
+                font-weight: 500;
+                color: var(--text-main);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                cursor: pointer;
+            }
+
+            .mobile-steps-indicator {
+                background: var(--bg-body);
+                border: none;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+                cursor: pointer;
+            }
+
+            .mobile-progress-bar {
+                height: 4px;
+                background: var(--border-light);
+                width: 100%;
+                border-radius: 2px;
+                overflow: hidden;
+            }
+
+            .mobile-progress-fill {
+                height: 100%;
+                background: var(--primary);
+                width: 0%;
+                transition: width 0.3s ease;
+                border-radius: 2px;
+            }
+
+            .header-top {
+                margin-bottom: 24px;
+            }
+            
+            .header-text h2 {
+                font-size: 24px;
+            }
+
+            /* Adjust forms for mobile */
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            /* Mobile Stack Reset */
+            .form-row .form-group {
+                flex: 1 !important; 
+            }
+
+            /* Hide desktop "Previous" button inside footer */
+            #btn-prev {
+                display: none !important;
+            }
+
+            .footer-nav {
+                padding-top: 16px;
+                padding-bottom: 24px;
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .footer-nav .btn {
+                width: 100%; /* Full width button on mobile */
+            }
+            
+            .help-link-mobile { 
+                display: inline-flex; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 1. Welcome Overlay -->
+<div id="welcome-overlay">
+    <div class="welcome-content">
+        <h1>Welcome to Marvels POS.</h1>
+        <p>The future of your retail starts here. Set up your store in minutes with our intelligent offline-first architecture.</p>
+        <button class="btn-start" onclick="hideWelcome()">Let's get you started! <i class="ph ph-arrow-right"></i></button>
+    </div>
+</div>
+
+<div class="installer-container">
+    <!-- Sidebar (Desktop Only) -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="ph-fill ph-hexagon"></i>
+            Marvels POS
+        </div>
+        <ul class="steps-list" id="sidebar-steps">
+            <!-- Populated dynamically by JS -->
+        </ul>
+        <!-- Desktop Help Link: Perfectly aligned with footer buttons -->
+        <div class="sidebar-footer">
+            <a href="#" class="help-link help-link-desktop"><i class="ph ph-info"></i> Having trouble? <strong>Get Help</strong></a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content-area">
+        
+        <!-- Mobile Header (Visible only on < 768px) -->
+        <div class="mobile-header-wrapper" id="mobile-header">
+            <div class="mobile-nav">
+                <button class="mobile-back-btn" id="mobile-back-btn" onclick="prevStep()">
+                    <i class="ph ph-caret-left"></i> Back
+                </button>
+                <button class="mobile-steps-indicator" onclick="toggleMobileSteps()">
+                    Steps <span id="mobile-step-count">1/5</span>
+                </button>
+            </div>
+            <div class="mobile-progress-bar">
+                <div class="mobile-progress-fill" id="mobile-progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="header-top" id="main-header-top">
+            <div class="header-text">
+                <h2 id="step-title">Select the type of installation</h2>
+                <p id="step-subtitle">Establish your store in just a few simple steps.</p>
+            </div>
+        </div>
+
+        <!-- Step 1: Setup Type -->
+        <div class="step-section active" id="step-1">
+            <div class="cards-vertical">
+                <div class="selection-card selected" id="card-new" onclick="selectFlow('new')">
+                    <i class="ph-duotone ph-storefront"></i>
+                    <div class="card-text">
+                        <h3>New Store</h3>
+                        <p>Create a brand-new cloud database backend and first admin.</p>
+                    </div>
+                </div>
+                <div class="selection-card" id="card-existing" onclick="selectFlow('existing')">
+                    <i class="ph-duotone ph-devices"></i>
+                    <div class="card-text">
+                        <h3>Existing Store / New Device</h3>
+                        <p>Reconnect this device to a store already installed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Storage Method (New Store) -->
+        <div class="step-section" id="step-2-new">
+            <div class="form-group">
+                <label>Storage mode</label>
+                <div class="custom-select-wrapper" id="storage-select">
+                    <div class="custom-select-trigger">
+                        <span class="selected-text">This PC + Google Sheets (recommended)</span>
+                        <i class="ph-bold ph-caret-down"></i>
+                    </div>
+                    <div class="custom-options">
+                        <div class="custom-option selected" data-value="hybrid">
+                            <span>This PC + Google Sheets (recommended)</span> <i class="ph-bold ph-check check-icon"></i>
+                        </div>
+                        <div class="custom-option" data-value="cloud">
+                            <span>Google Sheets only</span> <i class="ph-bold ph-check check-icon"></i>
+                        </div>
+                        <div class="custom-option" data-value="local">
+                            <span>This PC only</span> <i class="ph-bold ph-check check-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sheets-config-fields">
+                <details class="gs-instructions">
+                    <summary>How to set up the Google Sheet (2 minutes, no coding)</summary>
+                    <div class="gs-content">
+                        <ol>
+                            <li>Create a new <strong>Google Sheet</strong>.</li>
+                            <li>Open <strong>Extensions > Apps Script</strong>, delete the sample code and paste the backend script.<br>
+                                <button class="btn-small" id="copy-code-btn" type="button" onclick="copyCodeGs()"><i class="ph ph-copy"></i> Copy Code.gs</button> 
+                                <button class="btn-small" type="button"><i class="ph ph-download-simple"></i> Download</button>
+                            </li>
+                            <li><strong>Deploy > New deployment > Web app</strong> — Execute as: <strong>Me</strong>, Who has access: <strong>Anyone</strong> — then Deploy and authorise.</li>
+                            <li>Copy the <strong>Web app URL</strong> (ends in /exec), paste it below and connect.</li>
+                        </ol>
+                        <p class="gs-note">Tabs Products, Sales, SaleItems, StockMovements, Settings, SyncLog are created automatically. Already using an older script? Paste the new Code.gs and redeploy as a <strong>New version</strong> to enable offline sync.</p>
+                    </div>
+                </details>
+
+                <div class="form-group">
+                    <label>Google Apps Script Web App URL</label>
+                    <input type="text" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>One-time setup code</label>
+                    <input type="text" class="form-control" placeholder="Code from getAuthSetupCode()">
+                </div>
+                <div class="setup-hint">
+                    <i class="ph-duotone ph-lightbulb"></i>
+                    <p>In Apps Script: Choose <b>getAuthSetupCode()</b> from the dropdown above the code editor, then click the <b>Run</b> button.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Connect Store (Existing Store) -->
+        <div class="step-section" id="step-2-existing">
+            <div class="form-group">
+                <label>Existing Google Apps Script Web App URL</label>
+                <input type="text" id="existing-url" class="form-control" placeholder="Paste existing store URL here">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+                <button class="btn btn-outline btn-sm-check" onclick="checkConnection()">Check Connection</button>
+                <div id="connection-msg" style="font-size: 14px; font-weight: 500;"></div>
+            </div>
+        </div>
+
+        <!-- Step 3: Store Details (New Store) -->
+        <div class="step-section" id="step-3-new">
+            <div class="form-group">
+                <label>Store Name</label>
+                <input type="text" class="form-control" placeholder="e.g. Hi5 Oil Mill">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" class="form-control" placeholder="Store address">
+            </div>
+            
+            <!-- Email (Left / Wider) and Phone (Right / Narrower) -->
+            <div class="form-row">
+                <div class="form-group" style="flex: 1.5;">
+                    <label>Email</label>
+                    <input type="email" class="form-control" placeholder="store@example.com">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Phone Number</label>
+                    <input type="tel" class="form-control" placeholder="+1 234 567 8900">
+                </div>
+            </div>
+            
+            <!-- Language (Left / Wider) and Currency (Right / Narrower) -->
+            <div class="form-row">
+                <div class="form-group" style="flex: 1.5;">
+                    <label>Primary Language</label>
+                    <div class="custom-select-wrapper" id="lang-select">
+                        <div class="custom-select-trigger">
+                            <span class="selected-text">English — English</span>
+                            <i class="ph-bold ph-caret-down"></i>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option selected" data-value="en">
+                                <span>English — English</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                            <div class="custom-option" data-value="ta">
+                                <span>தமிழ் — Tamil</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                            <div class="custom-option" data-value="ta_en">
+                                <span>தமிழ் + English — Tamil + English</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                            <div class="custom-option" data-value="hi">
+                                <span>हिन्दी — Hindi</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Currency</label>
+                    <div class="custom-select-wrapper" id="currency-select">
+                        <div class="custom-select-trigger">
+                            <span class="selected-text">₹ — INR</span>
+                            <i class="ph-bold ph-caret-down"></i>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option selected" data-value="inr">
+                                <span>₹ — INR</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                            <div class="custom-option" data-value="usd">
+                                <span>$ — USD</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                            <div class="custom-option" data-value="eur">
+                                <span>€ — EUR</span> <i class="ph-bold ph-check check-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Admin Login (Existing Store) -->
+        <div class="step-section" id="step-3-existing">
+            <div class="form-group">
+                <label>Admin Username</label>
+                <input type="text" class="form-control" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <label>Admin PIN</label>
+                <!-- PIN input strictly accepts numeric value only -->
+                <input type="password" class="form-control" placeholder="Enter PIN to authenticate" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+
+        <!-- Step 4: Admin Setup (New Store) -->
+        <div class="step-section" id="step-4-new">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-control" placeholder="Admin name">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" class="form-control" placeholder="admin">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>PIN</label>
+                    <!-- PIN input strictly accepts numeric value only -->
+                    <input type="password" class="form-control" placeholder="5-digit PIN" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <div class="form-group">
+                    <label>Confirm PIN</label>
+                    <!-- PIN input strictly accepts numeric value only -->
+                    <input type="password" class="form-control" placeholder="Re-enter PIN" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Step -->
+        <div class="step-section" id="step-success" style="align-items: center; justify-content: center; text-align: center; padding-bottom: 50px;">
+            <canvas id="confetti-canvas"></canvas>
+            <i class="ph-duotone ph-confetti" style="font-size: 72px; color: var(--success); margin-bottom: 24px; position: relative; z-index: 10;"></i>
+            <h2 id="success-title" style="font-size: 28px; margin-bottom: 12px; font-weight: 700; position: relative; z-index: 10;">Store registered successfully!</h2>
+            <p id="success-subtitle" style="color: var(--text-muted); font-size: 16px; margin-bottom: 32px; position: relative; z-index: 10;">Congratulations! Your store is ready to use.</p>
+            
+            <button class="btn btn-primary" id="btn-success-action" onclick="finishSetup(this)" style="position: relative; z-index: 10; padding: 16px 32px; font-size: 16px;">
+                Open POS Dashboard <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Footer Navigation -->
+        <div class="footer-nav" id="footer-nav">
+            <div class="footer-nav-inner">
+                <button class="btn btn-outline hidden" id="btn-prev" onclick="prevStep()">Previous step</button>
+                <div style="flex:1" class="desktop-spacer"></div>
+                <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Next step</button>
+            </div>
+            <!-- Mobile Help Link -->
+            <a href="#" class="help-link help-link-mobile"><i class="ph ph-info"></i> Having trouble? <strong>Get Help</strong></a>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Bottom Sheet (Step Tracker) -->
+<div class="mobile-bottom-sheet-overlay" id="mobile-sheet-overlay" onclick="toggleMobileSteps()"></div>
+<div class="mobile-bottom-sheet" id="mobile-sheet">
+    <div class="sheet-header">
+        <div>
+            <h3>Complete steps</h3>
+            <p>You are a few steps away from finishing.</p>
+        </div>
+        <button class="sheet-close-btn" onclick="toggleMobileSteps()"><i class="ph-bold ph-x"></i></button>
+    </div>
+    <ul class="steps-list" id="mobile-steps-list">
+        <!-- Populated dynamically by JS alongside sidebar -->
+    </ul>
+</div>
+
+<script>
+    // --- OVERLAY LOGIC ---
+    function hideWelcome() {
+        document.getElementById('welcome-overlay').classList.add('hidden-overlay');
+    }
+
+    // --- INSTALLER LOGIC ---
+    let currentFlow = 'new';
+    let currentStepIndex = 1;
+
+    const flows = {
+        'new': [
+            { id: 1, domId: 'step-1', title: 'Select the type of installation', subtitle: 'Establish your store in just a few simple steps.', sidebar: 'Setup Type' },
+            { id: 2, domId: 'step-2-new', title: 'Storage Method', subtitle: 'Choose how your POS stores data.', sidebar: 'Storage Method' },
+            { id: 3, domId: 'step-3-new', title: 'Store Details', subtitle: 'Basic information about your business.', sidebar: 'Store Details' },
+            { id: 4, domId: 'step-4-new', title: 'Admin Setup', subtitle: 'Create the first Super Admin.', sidebar: 'Admin Setup' },
+            { id: 5, domId: 'step-success', title: 'Done', subtitle: '', sidebar: 'Success' }
+        ],
+        'existing': [
+            { id: 1, domId: 'step-1', title: 'Select the type of installation', subtitle: 'Establish your store in just a few simple steps.', sidebar: 'Setup Type' },
+            { id: 2, domId: 'step-2-existing', title: 'Connect Store', subtitle: 'Provide your existing backend URL.', sidebar: 'Connect Store' },
+            { id: 3, domId: 'step-3-existing', title: 'Admin Login', subtitle: 'Verify your identity to connect this device.', sidebar: 'Admin Login' },
+            { id: 4, domId: 'step-success', title: 'Done', subtitle: '', sidebar: 'Success' }
+        ]
+    };
+
+    function selectFlow(flowType) {
+        currentFlow = flowType;
+        document.getElementById('card-new').classList.remove('selected');
+        document.getElementById('card-existing').classList.remove('selected');
+        document.getElementById(`card-${flowType}`).classList.add('selected');
+        renderSidebar();
+    }
+
+    function checkConnection() {
+        const urlInput = document.getElementById('existing-url').value.trim();
+        const msgBox = document.getElementById('connection-msg');
+        
+        if (urlInput.endsWith('/exec')) {
+            msgBox.innerHTML = '<span class="success-text"><i class="ph-bold ph-check-circle"></i>Connection successful!</span>';
+        } else {
+            msgBox.innerHTML = '<span class="error-text"><i class="ph-bold ph-warning-circle"></i>Check your Sheets URL, it should end with /exec</span>';
+        }
+    }
+    
+    function copyCodeGs() {
+        const btn = document.getElementById('copy-code-btn');
+        btn.innerHTML = '<i class="ph-bold ph-check"></i> Copied Code.gs';
+        btn.style.color = 'var(--primary)';
+        btn.style.borderColor = 'var(--primary)';
+    }
+
+    function renderSidebar() {
+        const flowSteps = flows[currentFlow];
+        const sidebar = document.getElementById('sidebar-steps');
+        const mobileList = document.getElementById('mobile-steps-list');
+        
+        sidebar.innerHTML = '';
+        mobileList.innerHTML = '';
+        
+        let htmlStr = '';
+
+        flowSteps.forEach((step, index) => {
+            const isActive = index + 1 === currentStepIndex;
+            let isCompleted = index + 1 < currentStepIndex;
+            
+            if (isActive && index === flowSteps.length - 1) {
+                isCompleted = true;
+            }
+            
+            let circleContent = index + 1;
+            if (isCompleted) {
+                circleContent = '<i class="ph-bold ph-check"></i>';
+            }
+
+            let liClass = 'step-item';
+            if (isActive) liClass += ' active';
+            if (isCompleted) liClass += ' completed';
+
+            htmlStr += `
+                <li class="${liClass}">
+                    <div class="step-circle">${circleContent}</div>
+                    ${step.sidebar}
+                </li>
+            `;
+        });
+
+        sidebar.innerHTML = htmlStr;
+        mobileList.innerHTML = htmlStr;
+
+        // Update Mobile Indicators
+        const totalSteps = flowSteps.length;
+        document.getElementById('mobile-step-count').innerText = `${currentStepIndex}/${totalSteps}`;
+        const progressPercentage = ((currentStepIndex) / totalSteps) * 100;
+        document.getElementById('mobile-progress-fill').style.width = `${progressPercentage}%`;
+    }
+
+    function toggleMobileSteps() {
+        document.getElementById('mobile-sheet').classList.toggle('active');
+        document.getElementById('mobile-sheet-overlay').classList.toggle('active');
+    }
+
+    function updateView() {
+        document.querySelectorAll('.step-section').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        const flowSteps = flows[currentFlow];
+        const currentStepObj = flowSteps[currentStepIndex - 1];
+
+        document.getElementById(currentStepObj.domId).classList.add('active');
+        document.getElementById('step-title').innerText = currentStepObj.title;
+        document.getElementById('step-subtitle').innerText = currentStepObj.subtitle;
+        
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const footerNav = document.getElementById('footer-nav');
+        const mobileHeader = document.getElementById('mobile-header');
+        const mainHeaderTop = document.getElementById('main-header-top');
+        const mobileBackBtn = document.getElementById('mobile-back-btn');
+
+        if (currentStepObj.title === 'Done') {
+            mainHeaderTop.classList.add('hidden');
+            footerNav.classList.add('hidden'); 
+            mobileHeader.classList.add('hidden'); // Hide mobile header on success
+            
+            const actionBtn = document.getElementById('btn-success-action');
+            if(currentFlow === 'new') {
+                document.getElementById('success-title').innerText = 'Store registered successfully!';
+                document.getElementById('success-subtitle').innerText = 'Congratulations! Your store is ready to use.';
+                actionBtn.innerHTML = 'Open POS Dashboard <i class="ph-bold ph-arrow-right"></i>';
+            } else {
+                document.getElementById('success-title').innerText = 'New device registered successfully!';
+                document.getElementById('success-subtitle').innerText = 'This device is now connected to your store backend.';
+                actionBtn.innerHTML = 'Continue to POS <i class="ph-bold ph-arrow-right"></i>';
+            }
+
+            // Start confetti animation
+            startConfetti();
+
+        } else {
+            mainHeaderTop.classList.remove('hidden');
+            footerNav.classList.remove('hidden');
+            mobileHeader.classList.remove('hidden');
+            
+            // Handle Desktop Back Button
+            if (currentStepIndex === 1) {
+                btnPrev.classList.add('hidden');
+                mobileBackBtn.style.visibility = 'hidden'; // Hide but keep space on mobile
+            } else {
+                btnPrev.classList.remove('hidden');
+                mobileBackBtn.style.visibility = 'visible';
+            }
+
+            if (currentStepIndex === flowSteps.length - 1) {
+                btnNext.innerText = "Complete Setup";
+            } else {
+                btnNext.innerText = "Next step";
+            }
+
+            stopConfetti();
+        }
+
+        renderSidebar();
+        
+        // Scroll to top on step change for mobile friendliness
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextStep() {
+        const flowSteps = flows[currentFlow];
+        if (currentStepIndex < flowSteps.length) {
+            currentStepIndex++;
+            updateView();
+        }
+    }
+
+    function prevStep() {
+        if (currentStepIndex > 1) {
+            currentStepIndex--;
+            updateView();
+        }
+    }
+
+    function finishSetup(btn) {
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Redirecting...';
+        btn.style.opacity = '0.8';
+        btn.style.pointerEvents = 'none';
+        
+        setTimeout(() => {
+            btn.innerHTML = '<i class="ph-bold ph-check"></i> Done';
+        }, 1500);
+    }
+
+    // --- CUSTOM DROPDOWN LOGIC ---
+    function setupCustomDropdowns() {
+        const selects = document.querySelectorAll('.custom-select-wrapper');
+
+        selects.forEach(select => {
+            const trigger = select.querySelector('.custom-select-trigger');
+            const options = select.querySelectorAll('.custom-option');
+            const selectedText = trigger.querySelector('.selected-text');
+
+            trigger.addEventListener('click', (e) => {
+                selects.forEach(s => {
+                    if (s !== select) {
+                        s.classList.remove('open');
+                    }
+                });
+                select.classList.toggle('open');
+                e.stopPropagation();
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    
+                    // Safely grabs the text from inside the <span> element
+                    const textSpan = option.querySelector('span');
+                    if (textSpan) {
+                        selectedText.innerText = textSpan.innerText.trim();
+                    } else {
+                        selectedText.innerText = option.innerText.trim();
+                    }
+                    
+                    select.classList.remove('open');
+                    
+                    if(select.id === 'storage-select') {
+                        const val = option.getAttribute('data-value');
+                        const fields = document.getElementById('sheets-config-fields');
+                        if(val === 'local') {
+                            fields.classList.add('hidden');
+                        } else {
+                            fields.classList.remove('hidden');
+                        }
+                    }
+                    e.stopPropagation();
+                });
+            });
+        });
+
+        document.addEventListener('click', () => {
+            selects.forEach(s => s.classList.remove('open'));
+        });
+    }
+
+    // --- CONFETTI ANIMATION LOGIC (Vibrant / Multi-color) ---
+    let confettiCanvas, confettiCtx;
+    let confettiParticles = [];
+    let confettiAnimationId = null;
+    const confettiColors = ['#2575fc', '#10b981', '#f43f5e', '#eab308', '#8b5cf6', '#0ea5e9'];
+
+    function startConfetti() {
+        confettiCanvas = document.getElementById('confetti-canvas');
+        if(!confettiCanvas) return;
+        confettiCtx = confettiCanvas.getContext('2d');
+        
+        const container = document.getElementById('main-content-area');
+        confettiCanvas.width = container.clientWidth;
+        confettiCanvas.height = container.clientHeight;
+        
+        confettiParticles = [];
+        for(let i = 0; i < 120; i++) {
+            confettiParticles.push(createParticle());
+        }
+        
+        if (confettiAnimationId) {
+            cancelAnimationFrame(confettiAnimationId);
+        }
+        renderConfetti();
+    }
+
+    function stopConfetti() {
+        if (confettiAnimationId) {
+            cancelAnimationFrame(confettiAnimationId);
+            confettiAnimationId = null;
+        }
+        if(confettiCtx) {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+    }
+
+    function createParticle() {
+        return {
+            x: Math.random() * confettiCanvas.width,
+            y: (Math.random() * confettiCanvas.height) - confettiCanvas.height,
+            r: Math.random() * 5 + 3,
+            dx: Math.random() * 4 - 2,
+            dy: Math.random() * 4 + 2,
+            color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+            tilt: Math.floor(Math.random() * 10) - 10,
+            tiltAngleInc: (Math.random() * 0.07) + 0.05,
+            tiltAngle: 0
+        };
+    }
+
+    function renderConfetti() {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        
+        confettiParticles.forEach((p, index) => {
+            p.tiltAngle += p.tiltAngleInc;
+            p.y += (Math.cos(p.tiltAngle) + p.dy + p.r / 2) / 2;
+            p.x += Math.sin(p.tiltAngle) * 2;
+            
+            confettiCtx.beginPath();
+            confettiCtx.lineWidth = p.r;
+            confettiCtx.strokeStyle = p.color;
+            confettiCtx.moveTo(p.x + p.tilt + p.r, p.y);
+            confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+            confettiCtx.stroke();
+            
+            if (p.y > confettiCanvas.height) {
+                confettiParticles[index] = createParticle();
+                confettiParticles[index].y = -15;
+            }
+        });
+        
+        confettiAnimationId = requestAnimationFrame(renderConfetti);
+    }
+
+    window.addEventListener('resize', () => {
+        if(confettiCanvas && document.getElementById('step-success').classList.contains('active')) {
+            const container = document.getElementById('main-content-area');
+            confettiCanvas.width = container.clientWidth;
+            confettiCanvas.height = container.clientHeight;
+        }
+    });
+
+    // Initialize UI
+    renderSidebar();
+    setupCustomDropdowns();
+    // Set initial mobile back button state
+    document.getElementById('mobile-back-btn').style.visibility = 'hidden';
+</script>
+
+</body>
+</html>
